@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio | Postres{% endblock %}
+{% block page_title %}Inicio{% endblock %}
+
+{% block content %}
+<section class="dashboard-grid">
+    <article class="metric-card">
+        <span class="metric-icon bg-warning-subtle text-warning-emphasis">
+            <i class="bi bi-receipt" aria-hidden="true"></i>
+        </span>
+        <div>
+            <p class="metric-label">Pedidos pendientes</p>
+            <strong class="metric-value">0</strong>
+        </div>
+    </article>
+    <article class="metric-card">
+        <span class="metric-icon bg-info-subtle text-info-emphasis">
+            <i class="bi bi-calendar3" aria-hidden="true"></i>
+        </span>
+        <div>
+            <p class="metric-label">Entregas proximos 3 dias</p>
+            <strong class="metric-value">0</strong>
+        </div>
+    </article>
+    <article class="metric-card">
+        <span class="metric-icon bg-success-subtle text-success-emphasis">
+            <i class="bi bi-currency-dollar" aria-hidden="true"></i>
+        </span>
+        <div>
+            <p class="metric-label">Ventas del mes</p>
+            <strong class="metric-value">L 0.00</strong>
+        </div>
+    </article>
+    <article class="metric-card">
+        <span class="metric-icon bg-danger-subtle text-danger-emphasis">
+            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+        </span>
+        <div>
+            <p class="metric-label">Alertas inventario</p>
+            <strong class="metric-value">0</strong>
+        </div>
+    </article>
+</section>
+
+<section class="content-band">
+    <div class="section-header">
+        <div>
+            <p class="text-secondary mb-1 small">Sesion activa</p>
+            <h2 class="h5 mb-0">{{ request.user.get_full_name }}</h2>
+        </div>
+        <a class="btn btn-outline-primary btn-sm" href="{% url 'usuarios:password_change' %}">
+            <i class="bi bi-key" aria-hidden="true"></i>
+            Cambiar contrasena
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <tbody>
+                <tr>
+                    <th scope="row">Correo</th>
+                    <td>{{ request.user.email }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Telefono</th>
+                    <td>{{ request.user.telefono|default:"Sin registrar" }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Acceso staff</th>
+                    <td>
+                        {% if request.user.is_staff %}
+                            <span class="badge text-bg-success">Activo</span>
+                        {% else %}
+                            <span class="badge text-bg-secondary">No asignado</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
