@@ -1,13 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Count, Q
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 
-from .forms import InsumoForm, UnidadMedidaForm
-from .models import CategoriaInsumo, Insumo, UnidadMedida
+from .forms import InsumoForm, ProductoForm, ProductoInsumoFormSet, UnidadMedidaForm
+from .models import CategoriaInsumo, Insumo, Producto, UnidadMedida
 
 
 class UnidadMedidaListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -147,3 +148,98 @@ class InsumoToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
         estado = "activado" if insumo.activo else "desactivado"
         messages.success(request, f"Insumo {estado} correctamente.")
         return redirect("catalogo:insumo_list")
+
+
+
+class ProductoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = Producto
+    template_name = "catalogo/producto_list.html"
+    context_object_name = "productos"
+    permission_required = "catalogo.view_producto"
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Producto.objects.annotate(num_insumos=Count("insumos_receta")).order_by("nombre")
+        query = self.request.GET.get("q", "").strip()
+        estado = self.request.GET.get("estado", "").strip()
+        if query:
+            queryset = queryset.filter(Q(nombre__icontains=query) | Q(descripcion__icontains=query))
+        if estado == "activo":
+            queryset = queryset.filter(activo=True)
+        elif estado == "inactivo":
+            queryset = queryset.filter(activo=False)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["filters"] = {
+            "q": self.request.GET.get("q", ""),
+            "estado": self.request.GET.get("estado", ""),
+        }
+        return context
+
+
+class ProductoRecipeMixin:
+    model = Producto
+    form_class = ProductoForm
+    template_name = "catalogo/producto_form.html"
+    success_url = reverse_lazy("catalogo:producto_list")
+    recipe_formset_prefix = "receta"
+
+    def get_formset(self):
+        data = self.request.POST if self.request.method == "POST" else None
+        return ProductoInsumoFormSet(data=data, instance=self.object, prefix=self.recipe_formset_prefix)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.setdefault("formset", self.get_formset())
+        return context
+
+    def forms_valid(self, form, formset):
+        with transaction.atomic():
+            self.object = form.save()
+            formset.instance = self.object
+            formset.save()
+        messages.success(self.request, self.success_message)
+        return redirect(self.get_success_url())
+
+    def forms_invalid(self, form, formset):
+        return self.render_to_response(self.get_context_data(form=form, formset=formset))
+
+
+class ProductoCreateView(LoginRequiredMixin, PermissionRequiredMixin, ProductoRecipeMixin, CreateView):
+    permission_required = ("catalogo.add_producto", "catalogo.add_productoinsumo")
+    success_message = "Producto creado correctamente."
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = self.get_form()
+        formset = self.get_formset()
+        if form.is_valid() and formset.is_valid():
+            return self.forms_valid(form, formset)
+        return self.forms_invalid(form, formset)
+
+
+class ProductoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, ProductoRecipeMixin, UpdateView):
+    permission_required = ("catalogo.change_producto", "catalogo.change_productoinsumo")
+    success_message = "Producto actualizado correctamente."
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        formset = self.get_formset()
+        if form.is_valid() and formset.is_valid():
+            return self.forms_valid(form, formset)
+        return self.forms_invalid(form, formset)
+
+
+class ProductoToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = "catalogo.change_producto"
+
+    def post(self, request, pk):
+        producto = Producto.objects.get(pk=pk)
+        producto.activo = not producto.activo
+        producto.save(update_fields=["activo"])
+        estado = "activado" if producto.activo else "desactivado"
+        messages.success(request, f"Producto {estado} correctamente.")
+        return redirect("catalogo:producto_list")

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Productos | Postres{% endblock %}
+{% block page_title %}Productos{% endblock %}
+
+{% block content %}
+<section class="content-band">
+    <div class="section-header">
+        <form class="filters-row filters-row-compact" method="get">
+            <input class="form-control" type="search" name="q" value="{{ filters.q }}" placeholder="Buscar producto">
+            <select class="form-select" name="estado">
+                <option value="">Estado</option>
+                <option value="activo" {% if filters.estado == "activo" %}selected{% endif %}>Activos</option>
+                <option value="inactivo" {% if filters.estado == "inactivo" %}selected{% endif %}>Inactivos</option>
+            </select>
+            <button class="btn btn-outline-primary" type="submit">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                Buscar
+            </button>
+        </form>
+        {% if perms.catalogo.add_producto and perms.catalogo.add_productoinsumo %}
+            <a class="btn btn-primary" href="{% url 'catalogo:producto_create' %}">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                Nuevo
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Precio</th>
+                    <th>Rendimiento</th>
+                    <th>Ingredientes</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ producto.nombre }}</div>
+                            {% if producto.descripcion %}
+                                <div class="text-secondary small">{{ producto.descripcion|truncatechars:80 }}</div>
+                            {% endif %}
+                        </td>
+                        <td>L {{ producto.precio_venta }}</td>
+                        <td>{{ producto.rendimiento }}</td>
+                        <td>{{ producto.num_insumos }}</td>
+                        <td>
+                            {% if producto.activo %}
+                                <span class="badge text-bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if perms.catalogo.change_producto and perms.catalogo.change_productoinsumo %}
+                                <a class="btn btn-outline-secondary btn-sm" href="{% url 'catalogo:producto_update' producto.pk %}">
+                                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                                    Editar
+                                </a>
+                                <form class="d-inline" method="post" action="{% url 'catalogo:producto_toggle_active' producto.pk %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-outline-secondary btn-sm" type="submit">
+                                        {% if producto.activo %}
+                                            <i class="bi bi-pause-circle" aria-hidden="true"></i>
+                                            Desactivar
+                                        {% else %}
+                                            <i class="bi bi-play-circle" aria-hidden="true"></i>
+                                            Activar
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-secondary py-4">No hay productos registrados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

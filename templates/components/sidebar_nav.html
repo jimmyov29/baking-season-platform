@@ -10,7 +10,9 @@
     <a href="#" class="nav-link disabled" aria-disabled="true"><i class="bi bi-calendar-event" aria-hidden="true"></i> Proximas entregas</a>
 
     <div class="nav-section">Productos</div>
-    <a href="#" class="nav-link disabled" aria-disabled="true"><i class="bi bi-cup-hot" aria-hidden="true"></i> Productos</a>
+    {% if perms.catalogo.view_producto %}
+        <a href="{% url 'catalogo:producto_list' %}" class="nav-link"><i class="bi bi-cup-hot" aria-hidden="true"></i> Productos</a>
+    {% endif %}
     <a href="#" class="nav-link disabled" aria-disabled="true"><i class="bi bi-journal-text" aria-hidden="true"></i> Recetas</a>
     <a href="#" class="nav-link disabled" aria-disabled="true"><i class="bi bi-calculator" aria-hidden="true"></i> Calculadora</a>
 

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Producto | Postres{% endblock %}
+{% block page_title %}Producto{% endblock %}
+
+{% block content %}
+<section class="content-band form-band-wide">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.nombre.id_for_label }}">Nombre</label>
+                {{ form.nombre }}
+                {% for error in form.nombre.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="{{ form.precio_venta.id_for_label }}">Precio venta</label>
+                {{ form.precio_venta }}
+                {% for error in form.precio_venta.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="{{ form.rendimiento.id_for_label }}">Rendimiento</label>
+                {{ form.rendimiento }}
+                {% for error in form.rendimiento.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+                <label class="form-label" for="{{ form.descripcion.id_for_label }}">Descripcion</label>
+                {{ form.descripcion }}
+                {% for error in form.descripcion.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+                <div class="form-check">
+                    {{ form.activo }}
+                    <label class="form-check-label" for="{{ form.activo.id_for_label }}">Activo</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="recipe-editor mt-4" data-formset="{{ formset.prefix }}">
+            <div class="section-header mb-2">
+                <h2 class="h5 mb-0">Receta</h2>
+                <button class="btn btn-outline-primary btn-sm" type="button" data-add-form>
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                    Agregar ingrediente
+                </button>
+            </div>
+
+            {{ formset.management_form }}
+            {% if formset.non_form_errors %}
+                <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+            {% endif %}
+
+            <div class="table-responsive">
+                <table class="table align-middle recipe-table">
+                    <thead>
+                        <tr>
+                            <th>Insumo</th>
+                            <th>Cantidad</th>
+                            <th>Unidad</th>
+                            <th class="text-end">Eliminar</th>
+                        </tr>
+                    </thead>
+                    <tbody data-formset-body>
+                        {% for receta_form in formset.forms %}
+                            <tr data-form-row>
+                                {% for hidden in receta_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                <td>
+                                    {{ receta_form.insumo }}
+                                    {% for error in receta_form.insumo.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                </td>
+                                <td>
+                                    {{ receta_form.cantidad }}
+                                    {% for error in receta_form.cantidad.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                </td>
+                                <td>
+                                    {{ receta_form.unidad }}
+                                    {% for error in receta_form.unidad.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                    {% for error in receta_form.non_field_errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                                </td>
+                                <td class="text-end">
+                                    <span class="d-none">{{ receta_form.DELETE }}</span>
+                                    <button class="btn btn-outline-danger btn-sm" type="button" data-remove-form>
+                                        <i class="bi bi-trash" aria-hidden="true"></i>
+                                        Quitar
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <template data-empty-form>
+                <tr data-form-row>
+                    {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+                    <td>{{ formset.empty_form.insumo }}</td>
+                    <td>{{ formset.empty_form.cantidad }}</td>
+                    <td>{{ formset.empty_form.unidad }}</td>
+                    <td class="text-end">
+                        <span class="d-none">{{ formset.empty_form.DELETE }}</span>
+                        <button class="btn btn-outline-danger btn-sm" type="button" data-remove-form>
+                            <i class="bi bi-trash" aria-hidden="true"></i>
+                            Quitar
+                        </button>
+                    </td>
+                </tr>
+            </template>
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-outline-secondary" href="{% url 'catalogo:producto_list' %}">Cancelar</a>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-save" aria-hidden="true"></i>
+                Guardar
+            </button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/formsets.js' %}"></script>
+{% endblock %}

@@ -83,6 +83,14 @@ Rutas principales:
 python manage.py test
 ```
 
+## Alcance de la Fase 4
+
+- Productos con precio de venta, rendimiento y estado.
+- Recetas mediante lineas ProductoInsumo.
+- Conversion automatica de cantidades a unidad base.
+- Validacion de cantidades mayores a cero, unidades compatibles e insumos no repetidos.
+- Formulario con formset y JavaScript vanilla para agregar o quitar ingredientes.
+
 ## Alcance de la Fase 3
 
 - Categorias de insumo iniciales.

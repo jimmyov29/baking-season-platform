@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CategoriaInsumo, Insumo, UnidadMedida
+from .models import CategoriaInsumo, Insumo, Producto, ProductoInsumo, UnidadMedida
 
 
 @admin.register(UnidadMedida)
@@ -25,3 +25,19 @@ class InsumoAdmin(admin.ModelAdmin):
     list_filter = ("categoria", "unidad_base", "activo")
     search_fields = ("nombre", "categoria__nombre")
     autocomplete_fields = ("categoria", "unidad_base")
+
+
+
+class ProductoInsumoInline(admin.TabularInline):
+    model = ProductoInsumo
+    extra = 1
+    autocomplete_fields = ("insumo", "unidad")
+    readonly_fields = ("cantidad_base",)
+
+
+@admin.register(Producto)
+class ProductoAdmin(admin.ModelAdmin):
+    list_display = ("nombre", "precio_venta", "rendimiento", "activo")
+    list_filter = ("activo",)
+    search_fields = ("nombre",)
+    inlines = [ProductoInsumoInline]

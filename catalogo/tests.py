@@ -6,8 +6,8 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import CategoriaInsumo, Insumo, UnidadMedida
-from .services import convertir_a_unidad_base
+from .models import CategoriaInsumo, Insumo, Producto, ProductoInsumo, UnidadMedida
+from .services import calcular_requerimientos_producto, convertir_a_unidad_base
 
 
 class UnidadMedidaModelTests(TestCase):
@@ -197,3 +197,151 @@ class InsumoViewsTests(TestCase):
         self.insumo.refresh_from_db()
         self.assertEqual(response.status_code, 302)
         self.assertFalse(self.insumo.activo)
+
+
+
+class ProductoRecipeModelTests(TestCase):
+    def setUp(self):
+        self.categoria = CategoriaInsumo.objects.get(nombre="Ingrediente")
+        self.gramo = UnidadMedida.objects.get(abreviatura="g")
+        self.kilogramo = UnidadMedida.objects.get(abreviatura="kg")
+        self.mililitro = UnidadMedida.objects.get(abreviatura="ml")
+        self.harina = Insumo.objects.create(
+            nombre="Harina",
+            categoria=self.categoria,
+            unidad_base=self.gramo,
+            stock_minimo=Decimal("1000"),
+        )
+        self.producto = Producto.objects.create(
+            nombre="Brownie",
+            descripcion="Brownie clasico",
+            precio_venta=Decimal("80.00"),
+            rendimiento=12,
+        )
+
+    def test_recipe_line_converts_quantity_to_base_unit(self):
+        receta = ProductoInsumo.objects.create(
+            producto=self.producto,
+            insumo=self.harina,
+            cantidad=Decimal("0.5"),
+            unidad=self.kilogramo,
+        )
+
+        self.assertEqual(receta.cantidad_base, Decimal("500.000000"))
+        self.assertEqual(receta.cantidad_por_unidad, Decimal("41.66666666666666666666666667"))
+
+    def test_recipe_line_rejects_incompatible_unit(self):
+        with self.assertRaises(ValidationError):
+            ProductoInsumo(
+                producto=self.producto,
+                insumo=self.harina,
+                cantidad=Decimal("10"),
+                unidad=self.mililitro,
+            ).full_clean()
+
+    def test_product_rejects_invalid_rendimiento(self):
+        with self.assertRaises(ValidationError):
+            Producto(nombre="Producto invalido", precio_venta=Decimal("1"), rendimiento=0).full_clean()
+
+    def test_requerimientos_producto_scales_recipe(self):
+        ProductoInsumo.objects.create(
+            producto=self.producto,
+            insumo=self.harina,
+            cantidad=Decimal("500"),
+            unidad=self.gramo,
+        )
+
+        requerimientos = calcular_requerimientos_producto(self.producto, 24)
+
+        self.assertEqual(requerimientos[0]["cantidad_base"], Decimal("1000.000"))
+
+
+class ProductoViewsTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email="productos@postres.local",
+            password="clave-segura-123",
+        )
+        self.categoria = CategoriaInsumo.objects.get(nombre="Ingrediente")
+        self.gramo = UnidadMedida.objects.get(abreviatura="g")
+        self.harina = Insumo.objects.create(
+            nombre="Harina",
+            categoria=self.categoria,
+            unidad_base=self.gramo,
+            stock_minimo=Decimal("1000"),
+        )
+
+    def grant(self, *codenames):
+        permissions = Permission.objects.filter(codename__in=codenames)
+        self.user.user_permissions.add(*permissions)
+
+    def test_list_requires_login(self):
+        response = self.client.get(reverse("catalogo:producto_list"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("usuarios:login"), response["Location"])
+
+    def test_user_with_view_permission_can_list_products(self):
+        Producto.objects.create(nombre="Brownie", precio_venta=Decimal("80.00"), rendimiento=12)
+        self.grant("view_producto")
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("catalogo:producto_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Brownie")
+
+    def test_user_with_add_permissions_can_create_product_with_recipe(self):
+        self.grant("add_producto", "add_productoinsumo")
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("catalogo:producto_create"),
+            {
+                "nombre": "Brownie",
+                "descripcion": "Brownie clasico",
+                "precio_venta": "80.00",
+                "rendimiento": "12",
+                "activo": "on",
+                "receta-TOTAL_FORMS": "1",
+                "receta-INITIAL_FORMS": "0",
+                "receta-MIN_NUM_FORMS": "1",
+                "receta-MAX_NUM_FORMS": "1000",
+                "receta-0-insumo": self.harina.pk,
+                "receta-0-cantidad": "500.000",
+                "receta-0-unidad": self.gramo.pk,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        producto = Producto.objects.get(nombre="Brownie")
+        self.assertEqual(producto.insumos_receta.count(), 1)
+        self.assertEqual(producto.insumos_receta.first().cantidad_base, Decimal("500.000000"))
+
+    def test_duplicate_insumo_in_recipe_is_rejected(self):
+        self.grant("add_producto", "add_productoinsumo")
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("catalogo:producto_create"),
+            {
+                "nombre": "Brownie",
+                "descripcion": "",
+                "precio_venta": "80.00",
+                "rendimiento": "12",
+                "activo": "on",
+                "receta-TOTAL_FORMS": "2",
+                "receta-INITIAL_FORMS": "0",
+                "receta-MIN_NUM_FORMS": "1",
+                "receta-MAX_NUM_FORMS": "1000",
+                "receta-0-insumo": self.harina.pk,
+                "receta-0-cantidad": "500.000",
+                "receta-0-unidad": self.gramo.pk,
+                "receta-1-insumo": self.harina.pk,
+                "receta-1-cantidad": "300.000",
+                "receta-1-unidad": self.gramo.pk,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No puedes repetir el mismo insumo")

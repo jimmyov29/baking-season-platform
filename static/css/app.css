@@ -229,3 +229,25 @@ body {
         width: 100%;
     }
 }
+
+.filters-row-compact {
+    grid-template-columns: minmax(180px, 1fr) minmax(140px, 180px) auto;
+}
+
+.form-band-wide {
+    max-width: 1120px;
+}
+
+.recipe-table {
+    min-width: 720px;
+}
+
+.recipe-table th,
+.recipe-table td {
+    vertical-align: top;
+}
+
+.recipe-table .form-select,
+.recipe-table .form-control {
+    min-width: 160px;
+}
