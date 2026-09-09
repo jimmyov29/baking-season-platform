@@ -197,3 +197,35 @@ body {
         flex-direction: column;
     }
 }
+
+.filters-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(140px, 180px) minmax(140px, 180px) auto;
+    gap: .75rem;
+    width: 100%;
+}
+
+.form-band {
+    max-width: 860px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .75rem;
+    margin-top: 1.5rem;
+}
+
+ (max-width: 767.98px) {
+    .filters-row {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+}

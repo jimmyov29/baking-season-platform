@@ -29,5 +29,8 @@
 
     <div class="nav-section">Administracion</div>
     <a href="/admin/usuarios/usuario/" class="nav-link"><i class="bi bi-people" aria-hidden="true"></i> Usuarios</a>
+    {% if perms.catalogo.view_unidadmedida %}
+        <a href="{% url 'catalogo:unidad_list' %}" class="nav-link"><i class="bi bi-rulers" aria-hidden="true"></i> Unidades</a>
+    {% endif %}
     <a href="/admin/auth/group/" class="nav-link"><i class="bi bi-shield-lock" aria-hidden="true"></i> Roles</a>
 </nav>

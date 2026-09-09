@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Unidad | Postres{% endblock %}
+{% block page_title %}Unidad de medida{% endblock %}
+
+{% block content %}
+<section class="content-band form-band">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.nombre.id_for_label }}">Nombre</label>
+                {{ form.nombre }}
+                {% for error in form.nombre.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="{{ form.abreviatura.id_for_label }}">Abreviatura</label>
+                {{ form.abreviatura }}
+                {% for error in form.abreviatura.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="{{ form.tipo.id_for_label }}">Tipo</label>
+                {{ form.tipo }}
+                {% for error in form.tipo.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.factor_conversion.id_for_label }}">Factor de conversion</label>
+                {{ form.factor_conversion }}
+                {% for error in form.factor_conversion.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.unidad_base.id_for_label }}">Unidad base</label>
+                {{ form.unidad_base }}
+                {% for error in form.unidad_base.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+                <div class="form-check">
+                    {{ form.activo }}
+                    <label class="form-check-label" for="{{ form.activo.id_for_label }}">Activa</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-outline-secondary" href="{% url 'catalogo:unidad_list' %}">Cancelar</a>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-save" aria-hidden="true"></i>
+                Guardar
+            </button>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+from django import forms
+
+from .models import UnidadMedida
+
+
+class UnidadMedidaForm(forms.ModelForm):
+    class Meta:
+        model = UnidadMedida
+        fields = ("nombre", "abreviatura", "tipo", "factor_conversion", "unidad_base", "activo")
+        widgets = {
+            "nombre": forms.TextInput(attrs={"class": "form-control"}),
+            "abreviatura": forms.TextInput(attrs={"class": "form-control"}),
+            "tipo": forms.Select(attrs={"class": "form-select"}),
+            "factor_conversion": forms.NumberInput(attrs={"class": "form-control", "step": "0.000001", "min": "0.000001"}),
+            "unidad_base": forms.Select(attrs={"class": "form-select"}),
+            "activo": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        queryset = UnidadMedida.objects.filter(activo=True)
+        if self.instance.pk:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        self.fields["unidad_base"].queryset = queryset

@@ -83,6 +83,14 @@ Rutas principales:
 python manage.py test
 ```
 
+## Alcance de la Fase 2
+
+- Catalogo de unidades de medida.
+- Unidades base iniciales: gramo, mililitro y unidad.
+- Unidades derivadas iniciales: kilogramo y litro.
+- Servicio `convertir_a_unidad_base(cantidad, unidad)`.
+- Listado, busqueda, filtros, creacion, edicion y activacion/desactivacion.
+
 ## Alcance de la Fase 1
 
 - Usuario personalizado desde el inicio.
