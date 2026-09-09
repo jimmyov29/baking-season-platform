@@ -54,3 +54,46 @@ class UnidadMedida(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.abreviatura})"
+
+
+
+class CategoriaInsumo(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "categoria de insumo"
+        verbose_name_plural = "categorias de insumo"
+
+    def __str__(self):
+        return self.nombre
+
+
+class Insumo(models.Model):
+    nombre = models.CharField(max_length=150, unique=True)
+    categoria = models.ForeignKey(CategoriaInsumo, on_delete=models.PROTECT, related_name="insumos")
+    unidad_base = models.ForeignKey(UnidadMedida, on_delete=models.PROTECT, related_name="insumos")
+    stock_minimo = models.DecimalField(max_digits=12, decimal_places=3, default=Decimal("0"))
+    activo = models.BooleanField(default=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "insumo"
+        verbose_name_plural = "insumos"
+
+    def clean(self):
+        super().clean()
+        if self.stock_minimo < 0:
+            raise ValidationError({"stock_minimo": "El stock minimo no puede ser negativo."})
+        if self.unidad_base and not self.unidad_base.es_base:
+            raise ValidationError({"unidad_base": "El insumo debe usar una unidad base."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.nombre

@@ -83,6 +83,13 @@ Rutas principales:
 python manage.py test
 ```
 
+## Alcance de la Fase 3
+
+- Categorias de insumo iniciales.
+- Modelo de insumos con categoria, unidad base, stock minimo y estado.
+- Listado, busqueda, filtros, creacion, edicion y activacion/desactivacion.
+- Validaciones backend para stock minimo y uso obligatorio de unidades base.
+
 ## Alcance de la Fase 2
 
 - Catalogo de unidades de medida.

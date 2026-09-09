@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Insumos | Postres{% endblock %}
+{% block page_title %}Insumos{% endblock %}
+
+{% block content %}
+<section class="content-band">
+    <div class="section-header">
+        <form class="filters-row" method="get">
+            <input class="form-control" type="search" name="q" value="{{ filters.q }}" placeholder="Buscar insumo">
+            <select class="form-select" name="categoria">
+                <option value="">Categoria</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.pk }}" {% if filters.categoria == categoria.pk|stringformat:"s" %}selected{% endif %}>{{ categoria.nombre }}</option>
+                {% endfor %}
+            </select>
+            <select class="form-select" name="estado">
+                <option value="">Estado</option>
+                <option value="activo" {% if filters.estado == "activo" %}selected{% endif %}>Activos</option>
+                <option value="inactivo" {% if filters.estado == "inactivo" %}selected{% endif %}>Inactivos</option>
+            </select>
+            <button class="btn btn-outline-primary" type="submit">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                Buscar
+            </button>
+        </form>
+        {% if perms.catalogo.add_insumo %}
+            <a class="btn btn-primary" href="{% url 'catalogo:insumo_create' %}">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                Nuevo
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Categoria</th>
+                    <th>Unidad base</th>
+                    <th>Stock minimo</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for insumo in insumos %}
+                    <tr>
+                        <td>{{ insumo.nombre }}</td>
+                        <td>{{ insumo.categoria.nombre }}</td>
+                        <td>{{ insumo.unidad_base.abreviatura }}</td>
+                        <td>{{ insumo.stock_minimo }}</td>
+                        <td>
+                            {% if insumo.activo %}
+                                <span class="badge text-bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if perms.catalogo.change_insumo %}
+                                <a class="btn btn-outline-secondary btn-sm" href="{% url 'catalogo:insumo_update' insumo.pk %}">
+                                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                                    Editar
+                                </a>
+                                <form class="d-inline" method="post" action="{% url 'catalogo:insumo_toggle_active' insumo.pk %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-outline-secondary btn-sm" type="submit">
+                                        {% if insumo.activo %}
+                                            <i class="bi bi-pause-circle" aria-hidden="true"></i>
+                                            Desactivar
+                                        {% else %}
+                                            <i class="bi bi-play-circle" aria-hidden="true"></i>
+                                            Activar
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-secondary py-4">No hay insumos registrados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+        <nav aria-label="Paginacion">
+            <ul class="pagination mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+                {% endif %}
+                <li class="page-item active" aria-current="page"><span class="page-link">{{ page_obj.number }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

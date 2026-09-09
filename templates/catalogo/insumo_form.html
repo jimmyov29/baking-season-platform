@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Insumo | Postres{% endblock %}
+{% block page_title %}Insumo{% endblock %}
+
+{% block content %}
+<section class="content-band form-band">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label" for="{{ form.nombre.id_for_label }}">Nombre</label>
+                {{ form.nombre }}
+                {% for error in form.nombre.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="{{ form.categoria.id_for_label }}">Categoria</label>
+                {{ form.categoria }}
+                {% for error in form.categoria.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.unidad_base.id_for_label }}">Unidad base</label>
+                {{ form.unidad_base }}
+                {% for error in form.unidad_base.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="{{ form.stock_minimo.id_for_label }}">Stock minimo</label>
+                {{ form.stock_minimo }}
+                {% for error in form.stock_minimo.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+                <div class="form-check">
+                    {{ form.activo }}
+                    <label class="form-check-label" for="{{ form.activo.id_for_label }}">Activo</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a class="btn btn-outline-secondary" href="{% url 'catalogo:insumo_list' %}">Cancelar</a>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-save" aria-hidden="true"></i>
+                Guardar
+            </button>
+        </div>
+    </form>
+</section>
+{% endblock %}

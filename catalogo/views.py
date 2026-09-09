@@ -6,8 +6,8 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 
-from .forms import UnidadMedidaForm
-from .models import UnidadMedida
+from .forms import InsumoForm, UnidadMedidaForm
+from .models import CategoriaInsumo, Insumo, UnidadMedida
 
 
 class UnidadMedidaListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
@@ -77,3 +77,73 @@ class UnidadMedidaToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, 
         estado = "activada" if unidad.activo else "desactivada"
         messages.success(request, f"Unidad de medida {estado} correctamente.")
         return redirect("catalogo:unidad_list")
+
+
+
+class InsumoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    model = Insumo
+    template_name = "catalogo/insumo_list.html"
+    context_object_name = "insumos"
+    permission_required = "catalogo.view_insumo"
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("categoria", "unidad_base")
+        query = self.request.GET.get("q", "").strip()
+        categoria = self.request.GET.get("categoria", "").strip()
+        estado = self.request.GET.get("estado", "").strip()
+        if query:
+            queryset = queryset.filter(Q(nombre__icontains=query) | Q(categoria__nombre__icontains=query))
+        if categoria:
+            queryset = queryset.filter(categoria_id=categoria)
+        if estado == "activo":
+            queryset = queryset.filter(activo=True)
+        elif estado == "inactivo":
+            queryset = queryset.filter(activo=False)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["categorias"] = CategoriaInsumo.objects.filter(activo=True)
+        context["filters"] = {
+            "q": self.request.GET.get("q", ""),
+            "categoria": self.request.GET.get("categoria", ""),
+            "estado": self.request.GET.get("estado", ""),
+        }
+        return context
+
+
+class InsumoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Insumo
+    form_class = InsumoForm
+    template_name = "catalogo/insumo_form.html"
+    permission_required = "catalogo.add_insumo"
+    success_url = reverse_lazy("catalogo:insumo_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Insumo creado correctamente.")
+        return super().form_valid(form)
+
+
+class InsumoUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = Insumo
+    form_class = InsumoForm
+    template_name = "catalogo/insumo_form.html"
+    permission_required = "catalogo.change_insumo"
+    success_url = reverse_lazy("catalogo:insumo_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Insumo actualizado correctamente.")
+        return super().form_valid(form)
+
+
+class InsumoToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    permission_required = "catalogo.change_insumo"
+
+    def post(self, request, pk):
+        insumo = Insumo.objects.get(pk=pk)
+        insumo.activo = not insumo.activo
+        insumo.save(update_fields=["activo"])
+        estado = "activado" if insumo.activo else "desactivado"
+        messages.success(request, f"Insumo {estado} correctamente.")
+        return redirect("catalogo:insumo_list")

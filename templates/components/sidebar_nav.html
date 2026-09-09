@@ -29,6 +29,9 @@
 
     <div class="nav-section">Administracion</div>
     <a href="/admin/usuarios/usuario/" class="nav-link"><i class="bi bi-people" aria-hidden="true"></i> Usuarios</a>
+    {% if perms.catalogo.view_insumo %}
+        <a href="{% url 'catalogo:insumo_list' %}" class="nav-link"><i class="bi bi-boxes" aria-hidden="true"></i> Insumos</a>
+    {% endif %}
     {% if perms.catalogo.view_unidadmedida %}
         <a href="{% url 'catalogo:unidad_list' %}" class="nav-link"><i class="bi bi-rulers" aria-hidden="true"></i> Unidades</a>
     {% endif %}
